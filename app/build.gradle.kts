@@ -33,12 +33,26 @@ android {
             //渲染器的具体定义 格式为 名称:渲染器库名:EGL库名 例如 LTW:libltw.so:libltw.so
             //The specific definition format of a renderer is ${name}:${renderer library name}:${EGL library name}, for example:   LTW:libltw.so:libltw.so
             manifestPlaceholders["renderer"] = ""
-            //boat后端环境变量 格式为 变量名1=值1:变量名2=值2 冒号为英文冒号
-            //The format of the backend environment variables for boat is ${variable name 1}=${value 1}:${variable name 2}=${value 2}
-            manifestPlaceholders["boatEnv"] = ""
-            //同boat
-            //same as boat
-            manifestPlaceholders["pojavEnv"] = ""
+
+            manifestPlaceholders["boatEnv"] = mutableMapOf<String,String>().apply {
+
+            }.run {
+                var env = ""
+                forEach { (key, value) ->
+                    env += "$key=$value:"
+                }
+                env.dropLast(1)
+            }
+
+            manifestPlaceholders["pojavEnv"] = mutableMapOf<String,String>().apply {
+
+            }.run {
+                var env = ""
+                forEach { (key, value) ->
+                    env += "$key=$value:"
+                }
+                env.dropLast(1)
+            }
         }
     }
     compileOptions {
