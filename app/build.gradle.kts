@@ -34,6 +34,12 @@ android {
             //The specific definition format of a renderer is ${name}:${renderer library name}:${EGL library name}, for example:   LTW:libltw.so:libltw.so
             manifestPlaceholders["renderer"] = ""
 
+            //特殊Env
+            //Special Env
+            //DLOPEN=libxxx.so 用于加载额外库文件
+            //DLOPEN=libxxx.so used to load external library
+            //如果有多个库,可以使用","隔开,例如  DLOPEN=libxxx.so,libyyy.so
+            //If there are multiple libraries, you can use "," to separate them, for example  DLOPEN=libxxx.so,libyyy.so
             manifestPlaceholders["boatEnv"] = mutableMapOf<String,String>().apply {
 
             }.run {
