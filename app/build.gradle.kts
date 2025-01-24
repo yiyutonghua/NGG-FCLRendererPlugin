@@ -1,5 +1,4 @@
 @file:Suppress("UnstableApiUsage")
-var useANGLE by extra(true)
 
 plugins {
     alias(libs.plugins.android.application)
@@ -19,18 +18,73 @@ android {
     productFlavors {
         create("ANGLE") {
             dimension = "useANGLE"
-            useANGLE = true
+            applicationId = "com.bzlzhh.plugin.ngg"
+            manifestPlaceholders["des"] = "Krypton Wrapper (OpenGL ~3.0+)"
+            manifestPlaceholders["renderer"] = "NGGL4ES:libng_gl4es.so:libEGL_angle.so"
+            manifestPlaceholders["boatEnv"] = mutableMapOf<String,String>().apply {
+                put("LIBGL_EGL","libEGL_angle.so")
+                put("LIBGL_GLES","libGLESv2_angle.so")
+                put("LIBGL_USE_MC_COLOR","1")
+                put("DLOPEN","libspirv-cross-c-shared.so")
+                put("LIBGL_GL","30")
+                put("LIBGL_ES","3")
+                put("LIBGL_MIPMAP","3")
+                put("LIBGL_NORMALIZE","1")
+                put("LIBGL_NOINTOVLHACK","1")
+                put("LIBGL_NOERROR","1")
+            }.run {
+                var env = ""
+                forEach { (key, value) ->
+                    env += "$key=$value:"
+                }
+                env.dropLast(1)
+            }
+            manifestPlaceholders["pojavEnv"] = manifestPlaceholders["boatEnv"] as String + (mutableMapOf<String,String>().apply {
+                put("POJAV_RENDERER","opengles3")
+            }.run {
+                var env = ":"
+                forEach { (key, value) ->
+                    env += "$key=$value:"
+                }
+                env.dropLast(1)
+            })
             buildConfigField("boolean", "useANGLE", "true")
         }
         create("NO-ANGLE") {
             dimension = "useANGLE"
-            useANGLE = false
+            applicationId = "com.bzlzhh.plugin.ngg.angleless"
+            manifestPlaceholders["des"] = "Krypton Wrapper, NO-ANGLE (OpenGL ~3.0+)"
+            manifestPlaceholders["renderer"] = "NGGL4ES:libng_gl4es.so:libEGL.so"
+            manifestPlaceholders["boatEnv"] = mutableMapOf<String, String>().apply {
+                put("LIBGL_USE_MC_COLOR", "1")
+                put("DLOPEN", "libspirv-cross-c-shared.so")
+                put("LIBGL_GL", "30")
+                put("LIBGL_ES", "3")
+                put("LIBGL_MIPMAP", "3")
+                put("LIBGL_NORMALIZE", "1")
+                put("LIBGL_NOINTOVLHACK", "1")
+                put("LIBGL_NOERROR", "1")
+            }.run {
+                var env = ""
+                forEach { (key, value) ->
+                    env += "$key=$value:"
+                }
+                env.dropLast(1)
+            }
+            manifestPlaceholders["pojavEnv"] = manifestPlaceholders["boatEnv"] as String + (mutableMapOf<String,String>().apply {
+                put("POJAV_RENDERER","opengles3")
+            }.run {
+                var env = ":"
+                forEach { (key, value) ->
+                    env += "$key=$value:"
+                }
+                env.dropLast(1)
+            })
             buildConfigField("boolean", "useANGLE", "false")
         }
     }
     
     defaultConfig {
-        applicationId = if (useANGLE) "com.bzlzhh.plugin.ngg" else "com.bzlzhh.plugin.ngg.angleless"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
@@ -43,55 +97,6 @@ android {
         }
         configureEach {
             resValue("string","app_name","Krypton Wrapper")
-            if (useANGLE) {
-                manifestPlaceholders["des"] = "Krypton Wrapper (OpenGL ~3.0+)"
-                manifestPlaceholders["renderer"] = "NGGL4ES:libng_gl4es.so:libEGL_angle.so"
-            } else {
-                manifestPlaceholders["des"] = "Krypton Wrapper, NO-ANGLE (OpenGL ~3.0+)"
-                manifestPlaceholders["renderer"] = "NGGL4ES:libng_gl4es.so:libEGL.so"
-            }
-            manifestPlaceholders["boatEnv"] = mutableMapOf<String,String>().apply {
-                if(useANGLE) {
-                    put("LIBGL_EGL","libEGL_angle.so")
-                    put("LIBGL_GLES","libGLESv2_angle.so")
-                }
-                put("LIBGL_USE_MC_COLOR","1")
-                put("DLOPEN","libspirv-cross-c-shared.so")
-                put("LIBGL_GL","30")
-                put("LIBGL_ES","3")
-                put("LIBGL_MIPMAP","3")
-                put("LIBGL_NORMALIZE","1")
-                put("LIBGL_NOINTOVLHACK","1")
-                put("LIBGL_NOERROR","1")
-            }.run {
-                var env = ""
-                forEach { (key, value) ->
-                    env += "$key=$value:"
-                }
-                env.dropLast(1)
-            }
-
-            manifestPlaceholders["pojavEnv"] = mutableMapOf<String,String>().apply {
-                if(useANGLE) {
-                    put("LIBGL_EGL","libEGL_angle.so")
-                    put("LIBGL_GLES","libGLESv2_angle.so")
-                }
-                put("LIBGL_USE_MC_COLOR","1")
-                put("DLOPEN","libspirv-cross-c-shared.so")
-                put("LIBGL_GL","30")
-                put("LIBGL_ES","3")
-                put("LIBGL_MIPMAP","3")
-                put("LIBGL_NORMALIZE","1")
-                put("LIBGL_NOINTOVLHACK","1")
-                put("LIBGL_NOERROR","1")
-                put("POJAV_RENDERER","opengles3")
-            }.run {
-                var env = ""
-                forEach { (key, value) ->
-                    env += "$key=$value:"
-                }
-                env.dropLast(1)
-            }
         }
     }
     compileOptions {
