@@ -1,18 +1,40 @@
+@file:Suppress("UnstableApiUsage")
+var useANGLE by extra(true)
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
 }
 
 android {
-    namespace = "com.mio.plugin.renderer"
+    namespace = "com.bzlzhh.plugin.ngg"
     compileSdk = 34
 
+    buildFeatures {
+        buildConfig = true
+    }
+
+    flavorDimensions.add("useANGLE")
+
+    productFlavors {
+        create("ANGLE") {
+            dimension = "useANGLE"
+            useANGLE = true
+            buildConfigField("boolean", "useANGLE", "true")
+        }
+        create("NO-ANGLE") {
+            dimension = "useANGLE"
+            useANGLE = false
+            buildConfigField("boolean", "useANGLE", "false")
+        }
+    }
+    
     defaultConfig {
-        applicationId = "com.mio.plugin.renderer"
+        applicationId = if (useANGLE) "com.bzlzhh.plugin.ngg" else "com.bzlzhh.plugin.ngg.angleless"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0"
+        versionName = "Release 0.1.0"
     }
 
     buildTypes {
@@ -20,28 +42,27 @@ android {
             isMinifyEnabled = false
         }
         configureEach {
-            //应用名
-            //app name
-            resValue("string","app_name","XXX Renderer")
-            //包名后缀
-            //package name Suffix
-            applicationIdSuffix = ".xxx"
-
-            //渲染器在启动器内显示的名称
-            //The name displayed by the renderer in the launcher
-            manifestPlaceholders["des"] = ""
-            //渲染器的具体定义 格式为 名称:渲染器库名:EGL库名 例如 LTW:libltw.so:libltw.so
-            //The specific definition format of a renderer is ${name}:${renderer library name}:${EGL library name}, for example:   LTW:libltw.so:libltw.so
-            manifestPlaceholders["renderer"] = ""
-
-            //特殊Env
-            //Special Env
-            //DLOPEN=libxxx.so 用于加载额外库文件
-            //DLOPEN=libxxx.so used to load external library
-            //如果有多个库,可以使用","隔开,例如  DLOPEN=libxxx.so,libyyy.so
-            //If there are multiple libraries, you can use "," to separate them, for example  DLOPEN=libxxx.so,libyyy.so
+            resValue("string","app_name","Krypton Wrapper")
+            if (useANGLE) {
+                manifestPlaceholders["des"] = "Krypton Wrapper (OpenGL ~3.0+)"
+                manifestPlaceholders["renderer"] = "NGGL4ES:libng_gl4es.so:libEGL_angle.so"
+            } else {
+                manifestPlaceholders["des"] = "Krypton Wrapper, NO-ANGLE (OpenGL ~3.0+)"
+                manifestPlaceholders["renderer"] = "NGGL4ES:libng_gl4es.so:libEGL.so"
+            }
             manifestPlaceholders["boatEnv"] = mutableMapOf<String,String>().apply {
-
+                if(useANGLE) {
+                    put("LIBGL_EGL","libEGL_angle.so")
+                    put("LIBGL_GLES","libGLESv2_angle.so")
+                }
+                put("LIBGL_USE_MC_COLOR","1")
+                put("DLOPEN","libspirv-cross-c-shared.so")
+                put("LIBGL_GL","30")
+                put("LIBGL_ES","3")
+                put("LIBGL_MIPMAP","3")
+                put("LIBGL_NORMALIZE","1")
+                put("LIBGL_NOINTOVLHACK","1")
+                put("LIBGL_NOERROR","1")
             }.run {
                 var env = ""
                 forEach { (key, value) ->
@@ -51,7 +72,19 @@ android {
             }
 
             manifestPlaceholders["pojavEnv"] = mutableMapOf<String,String>().apply {
-
+                if(useANGLE) {
+                    put("LIBGL_EGL","libEGL_angle.so")
+                    put("LIBGL_GLES","libGLESv2_angle.so")
+                }
+                put("LIBGL_USE_MC_COLOR","1")
+                put("DLOPEN","libspirv-cross-c-shared.so")
+                put("LIBGL_GL","30")
+                put("LIBGL_ES","3")
+                put("LIBGL_MIPMAP","3")
+                put("LIBGL_NORMALIZE","1")
+                put("LIBGL_NOINTOVLHACK","1")
+                put("LIBGL_NOERROR","1")
+                put("POJAV_RENDERER","opengles3")
             }.run {
                 var env = ""
                 forEach { (key, value) ->
@@ -71,4 +104,11 @@ android {
 }
 
 dependencies {
+    implementation("com.squareup.okhttp3:okhttp:4.9.3")
+    implementation("io.noties.markwon:core:4.6.2")
+    implementation("io.noties.markwon:ext-strikethrough:4.6.2")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.7.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
+    implementation("androidx.core:core:1.13.1")
 }
