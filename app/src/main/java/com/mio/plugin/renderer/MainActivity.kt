@@ -109,7 +109,7 @@ class MainActivity : Activity() {
             setOnClickListener {
                 val builder = AlertDialog.Builder(layout.context)
                 builder.setTitle("光影效果优先")
-                    .setMessage("由于一些原因，现版本暂无法做到光影水反(有可能还有其它功能)与效率兼顾，因此您需要选择使用的方案。\n\n实际上，更推荐您使用\"光影效率优先\"方案，它的光影运行效率大约是\"光影效果优先\"方案的5倍。")
+                    .setMessage("由于一些原因，现版本暂无法做到部分光影的水反(有可能还有其它功能)与效率兼顾，因此您需要选择使用的方案。\n\n实际上，更推荐您使用\"光影效率优先\"方案，它的光影运行效率大约是\"光影效果优先\"方案的5倍。")
                     .show()
             }
         }
@@ -130,7 +130,7 @@ class MainActivity : Activity() {
                     isChecked = true
                     AlertDialog.Builder(this.context)
                         .setTitle("警告")
-                        .setMessage("选用\"光影效果优先\"方案后，光影的水反(有可能还有其它功能)将可以正常渲染或使用。\n\n但这会导致光影运行效率十分低下(约为\"光影效率优先\"方案的20%)，请问您是否确定继续启用此方案？")
+                        .setMessage("选用\"光影效果优先\"方案后，所有光影的水反(有可能还有其它功能)将可以正常渲染或使用。\n\n但这会导致光影运行效率十分低下(约为\"光影效率优先\"方案的20%)，请问您是否确定继续启用此方案？")
                         .setPositiveButton("是") { _: DialogInterface?, _: Int ->
                             isDisableForceESCopyTex = true
                             isChecked = false
