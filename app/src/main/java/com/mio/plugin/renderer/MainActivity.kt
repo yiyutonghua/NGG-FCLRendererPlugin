@@ -15,26 +15,33 @@ import android.opengl.GLES20
 import android.os.*
 import android.provider.Settings
 import android.view.*
+import android.util.TypedValue
 import android.widget.*
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import com.bzlzhh.plugin.ngg.BuildConfig.useANGLE
+//import com.bzlzhh.plugin.ngg.BuildConfig.useANGLE
 import io.noties.markwon.Markwon
 import kotlinx.coroutines.*
 import okhttp3.*
 import java.io.File
-
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.divider.MaterialDivider
+import com.google.android.material.materialswitch.MaterialSwitch
+import com.google.android.material.textview.MaterialTextView
+import com.google.android.material.color.MaterialColors
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import android.graphics.drawable.GradientDrawable
+import androidx.core.graphics.ColorUtils
 
 class MainActivity : Activity() {
     private val websiteUrl = "https://ng-gl4es.bzlzhh.top"
-    private val markdownFileUrl = "https://raw.githubusercontent.com/BZLZHH/NG-GL4ES/public/README.md"
+    private val markdownFileUrl = "https://raw.githubusercontent.com/BZLZHH/NG-GL4ES/main/README.md"
     
     private val REQUEST_CODE_PERMISSION = 0x00099
     private val REQUEST_CODE = 12
 
-    private var forceESCopyTexSwitcher: Switch? = null
-    private  var isDisableForceESCopyTex = false
+    private var ANGLESwitcher: MaterialSwitch? = null
     
     private val client = OkHttpClient()
     private var isMarkdownVisible = false
@@ -43,174 +50,155 @@ class MainActivity : Activity() {
     
     private var hasAllFilesPermission = false
         set(value) {
-            if (forceESCopyTexSwitcher != null) {
-                forceESCopyTexSwitcher!!.isEnabled = value
+            if (ANGLESwitcher != null) {
+                ANGLESwitcher!!.isEnabled = value
             }
             field = value
         }
     private var isNoticedAllFilesPermissionMissing = true
 
+    fun Int.dpToPx(): Int =
+        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, this.toFloat(), resources.displayMetrics).toInt()
+
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         checkPermission()
-        checkAdreno740()
-        checkVulkanSupportability(this)
         if (hasAllFilesPermission) {
             NGGConfigEditor.configRefresh()
         }
-        
+
         val scrollView = ScrollView(this)
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.TOP
-            setPadding(16, 16, 16, 16)
+            setPadding(32, 32, 32, 32)
         }
 
-        val kryptonTextView = TextView(this).apply {
+        val kryptonTextView = MaterialTextView(this).apply {
             text = "Krypton Wrapper"
-            textSize = 28f
-            setTextColor(Color.BLACK)
-            setTypeface(null, Typeface.BOLD)
+            setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_HeadlineLarge)
+            gravity = Gravity.CENTER
+            setTypeface(typeface, Typeface.BOLD)
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply {
+                topMargin = 32.dpToPx()
+                bottomMargin = 16.dpToPx()
+            }
+        }
+
+        val releaseTextView = MaterialTextView(this).apply {
+            text = getAppVersionName()
+            setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge)
+            setTextColor(MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurfaceVariant, Color.GRAY))
             gravity = Gravity.CENTER
         }
 
-        val releaseTextView = TextView(this).apply {
-            text = getAppVersionName() + if(!useANGLE) " NO-ANGLE" else ""
-            textSize = 18f
-            setTextColor(Color.GRAY)
-            gravity = Gravity.CENTER
-        }
-
-        val byTextView = TextView(this).apply {
+        val byTextView = MaterialTextView(this).apply {
             text = "By BZLZHH"
-            textSize = 18f
-            setTextColor(Color.BLACK)
+            setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge)
             gravity = Gravity.CENTER
         }
 
-        val divider = View(layout.context)
-        val dividerParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 1)
-        divider.layoutParams = dividerParams
-        divider.setBackgroundColor(Color.rgb(70, 70, 70))
+        val divider = MaterialDivider(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply {
+                topMargin = 100
+                bottomMargin = 100
+            }
+        }
 
         val horizontalInnerLayout = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
         }
 
-        val settingText1 = TextView(this).apply {
-            text = "光影效果优先"
-            textSize = 17f
-            setTextColor(Color.BLACK)
-            gravity = Gravity.CENTER
-            setTextColor(Color.BLUE)
-            paintFlags = paintFlags or Paint.UNDERLINE_TEXT_FLAG
-            setOnClickListener {
-                val builder = AlertDialog.Builder(layout.context)
-                builder.setTitle("光影效果优先")
-                    .setMessage("由于一些原因，现版本暂无法做到部分光影的水反(有可能还有其它功能)与效率兼顾，因此您需要选择使用的方案。\n\n实际上，更推荐您使用\"光影效率优先\"方案，它的光影运行效率大约是\"光影效果优先\"方案的5倍。")
-                    .show()
-            }
-        }
-        
-        val settingText2 = TextView(this).apply {
-            text = "光影效率优先"
-            textSize = 17f
-            setTypeface(typeface, Typeface.BOLD)
-            setTextColor(Color.BLACK)
+        val settingText1 = MaterialTextView(this).apply {
+            text = "禁用 ANGLE"
+            setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge)
             gravity = Gravity.CENTER
         }
 
-        forceESCopyTexSwitcher = Switch(this).apply {
+        val settingText2 = MaterialTextView(this).apply {
+            text = "启用 ANGLE"
+            setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge)
+            gravity = Gravity.CENTER
+        }
+
+        ANGLESwitcher = MaterialSwitch(this).apply {
             isEnabled = hasAllFilesPermission
-
             setOnCheckedChangeListener { _, _ ->
-                if (!isChecked && !isDisableForceESCopyTex) {
-                    isChecked = true
-                    AlertDialog.Builder(this.context)
-                        .setTitle("警告")
-                        .setMessage("选用\"光影效果优先\"方案后，所有光影的水反(有可能还有其它功能)将可以正常渲染或使用。\n\n但这会导致光影运行效率十分低下(约为\"光影效率优先\"方案的20%)，请问您是否确定继续启用此方案？")
-                        .setPositiveButton("是") { _: DialogInterface?, _: Int ->
-                            isDisableForceESCopyTex = true
-                            isChecked = false
-                        }
-                        .setNegativeButton("否") { _: DialogInterface?, _: Int ->  }
-                        .show()
-                }
-                if (isDisableForceESCopyTex) {
-                    isDisableForceESCopyTex = false
-                }
-                NGGConfigEditor.configSetInt("force_es_copy_tex", if (isChecked) 1 else 0)
+                NGGConfigEditor.configSetInt("enableANGLE", if (isChecked) 1 else 0)
                 NGGConfigEditor.configSaveToFile()
                 refreshConfig()
             }
         }
-        
-        horizontalInnerLayout.addView(settingText1)
-        horizontalInnerLayout.addView(forceESCopyTexSwitcher)
-        horizontalInnerLayout.addView(settingText2)
 
-        val divider2 = View(layout.context)
-        val divider2Params = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 1)
-        divider2.layoutParams = divider2Params
-        divider2.setBackgroundColor(Color.rgb(70, 70, 70))
+        horizontalInnerLayout.addView(settingText1.apply { setPadding(0,0,8.dpToPx(),0) })
+        horizontalInnerLayout.addView(ANGLESwitcher?.apply { setPadding(8.dpToPx(),0,8.dpToPx(),0) })
+        horizontalInnerLayout.addView(settingText2.apply { setPadding(8.dpToPx(),0,0,0) })
 
+        val divider2 = MaterialDivider(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply {
+                topMargin = 100
+                bottomMargin = 100
+            }
+        }
 
-        val goToWebsiteButton = Button(this).apply {
-            val shape = GradientDrawable()
-            shape.shape = GradientDrawable.RECTANGLE
-            shape.cornerRadius = 100f
-            shape.setColor(Color.rgb(159, 237, 253))
-            background = shape
+        val goToWebsiteButton = MaterialButton(this).apply {
             text = "跳转至官网"
             setOnClickListener {
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(websiteUrl))
                 startActivity(intent)
             }
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                48.dpToPx()
+            ).apply { bottomMargin = 16.dpToPx() }
+
         }
-        
-        val shareLogButton = Button(this).apply {
-            val shape = GradientDrawable()
-            shape.shape = GradientDrawable.RECTANGLE
-            shape.cornerRadius = 100f
-            shape.setColor(Color.rgb(159, 237, 253))
-            background = shape
+
+        val shareLogButton = MaterialButton(this).apply {
             text = "分享日志文件"
             setOnClickListener {
                 val logFile = File(NGGConfigEditor.LOG_FILE_PATH)
-
                 if (!logFile.exists()) {
-                    Toast.makeText(this.context, "日志文件不存在！", Toast.LENGTH_SHORT).show()
-                }
-
-                try {
-                    val fileUri: Uri = FileProvider.getUriForFile(
-                        this.context,
-                        "$packageName.fileprovider",
-                        logFile
-                    )
-
-                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                        type = "text/plain"
-                        putExtra(Intent.EXTRA_STREAM, fileUri)
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    Toast.makeText(context, "日志文件不存在！", Toast.LENGTH_SHORT).show()
+                } else {
+                    try {
+                        val fileUri = FileProvider.getUriForFile(
+                            context,
+                            "$packageName.fileprovider",
+                            logFile
+                        )
+                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_STREAM, fileUri)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        startActivity(Intent.createChooser(shareIntent, "分享日志文件"))
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        Toast.makeText(context, "分享日志文件失败！", Toast.LENGTH_SHORT).show()
                     }
-
-                    startActivity(Intent.createChooser(shareIntent, "分享日志文件"))
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    Toast.makeText(this.context, "分享日志文件失败！", Toast.LENGTH_SHORT).show()
                 }
             }
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                48.dpToPx()
+            ).apply { bottomMargin = 16.dpToPx() }
+
         }
-        
-        val showReadmeButton = Button(this).apply {
-            val shape = GradientDrawable()
-            shape.shape = GradientDrawable.RECTANGLE
-            shape.cornerRadius = 100f
-            shape.setColor(Color.rgb(159, 237, 253))
-            background = shape
+
+        val showReadmeButton = MaterialButton(this).apply {
             text = "查看 README.md"
             setOnClickListener {
                 if (markdownViewAnimFinished) {
@@ -225,31 +213,35 @@ class MainActivity : Activity() {
                     }
                 }
             }
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                48.dpToPx()
+            ).apply { bottomMargin = 16.dpToPx() }
+
         }
 
-        layout.addView(kryptonTextView)
-        layout.addView(releaseTextView)
-        layout.addView(byTextView)
-        layout.addView(divider)
-        divider.layoutParams = (divider.layoutParams as ViewGroup.MarginLayoutParams).apply {
-            topMargin = 100
-            bottomMargin = 100
+        layout.apply {
+            addView(kryptonTextView)
+            addView(releaseTextView)
+            addView(byTextView)
+            addView(divider)
+            addView(horizontalInnerLayout)
+            addView(divider2)
+            addView(goToWebsiteButton.apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                ).apply { bottomMargin = 50 }
+            })
+            addView(shareLogButton.apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                ).apply { bottomMargin = 50 }
+            })
+            addView(showReadmeButton)
         }
-        layout.addView(horizontalInnerLayout)
-        layout.addView(divider2)
-        divider2.layoutParams = (divider2.layoutParams as ViewGroup.MarginLayoutParams).apply {
-            topMargin = 100
-            bottomMargin = 100
-        }
-        layout.addView(goToWebsiteButton)
-        goToWebsiteButton.layoutParams = (goToWebsiteButton.layoutParams as ViewGroup.MarginLayoutParams).apply {
-            bottomMargin = 50
-        }
-        layout.addView(shareLogButton)
-        shareLogButton.layoutParams = (shareLogButton.layoutParams as ViewGroup.MarginLayoutParams).apply {
-            bottomMargin = 50
-        }
-        layout.addView(showReadmeButton)
+
         scrollView.addView(layout)
         setContentView(scrollView)
 
@@ -261,7 +253,7 @@ class MainActivity : Activity() {
             if (Environment.isExternalStorageManager()) {
                 hasAllFilesPermission = true
             } else {
-                AlertDialog.Builder(this)
+                MaterialAlertDialogBuilder(this)
                     .setTitle("权限请求")
                     .setMessage("程序需要获取访问所有文件权限才能正常使用 Krypton Wrapper 设置功能。是否授予？")
                     .setPositiveButton("是") { _: DialogInterface?, _: Int ->
@@ -391,39 +383,39 @@ class MainActivity : Activity() {
     }
     
     private fun checkAdreno740() {
-        val renderer = getGPUName()
-        if (renderer != null && renderer.contains("Adreno", ignoreCase = true) && renderer.contains("740", ignoreCase = true)) {
-            // device is Adreno 740
-            if (useANGLE)
-                AlertDialog.Builder(this)
-                    .setTitle("警告")
-                    .setMessage("检测到设备的 GPU 是 Adreno 740! Adreno 740 可能在使用了 ANGLE 的 Krypton Wrapper 的中出现严重渲染错误!\n\n您应当前往官网，下载\"NO-ANGLE\"版本。")
-                    .setPositiveButton("前往官网") { _: DialogInterface?, _: Int ->
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(websiteUrl))
-                        startActivity(intent)
-                    }
-                    .setNegativeButton("继续使用此版本") { _: DialogInterface?, _: Int ->  }
-                    .setOnKeyListener { _, keyCode, _ ->
-                        keyCode == KeyEvent.KEYCODE_BACK
-                    }
-                    .setCancelable(false)
-                    .show()
-        } else {
-            if (!useANGLE)
-             AlertDialog.Builder(this)
-                 .setTitle("警告")
-                 .setMessage("检测到设备的 GPU 不是 Adreno 740! 非 Adreno 740 的设备在没有使用 ANGLE 的 Krypton Wrapper 的中出现少部分光影渲染错误，且效率更低!\n\n您应当前往官网，下载没有标注\"NO-ANGLE\"版本。")
-                 .setPositiveButton("前往官网") { _: DialogInterface?, _: Int ->
-                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(websiteUrl))
-                     startActivity(intent)
-                 }
-                 .setNegativeButton("继续使用此版本") { _: DialogInterface?, _: Int ->  }
-                 .setOnKeyListener { _, keyCode, _ ->
-                     keyCode == KeyEvent.KEYCODE_BACK
-                 }
-                 .setCancelable(false)
-                 .show()
-        }
+        //val renderer = getGPUName()
+        //if (renderer != null && renderer.contains("Adreno", ignoreCase = true) && renderer.contains("740", ignoreCase = true)) {
+        //    // device is Adreno 740
+        //    if (useANGLE)
+        //        AlertDialog.Builder(this)
+        //            .setTitle("警告")
+        //            .setMessage("检测到设备的 GPU 是 Adreno 740! Adreno 740 可能在使用了 ANGLE 的 Krypton Wrapper 的中出现严重渲染错误!\n\n您应当前往官网，下载\"NO-ANGLE\"版本。")
+        //            .setPositiveButton("前往官网") { _: DialogInterface?, _: Int ->
+        //                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(websiteUrl))
+        //                startActivity(intent)
+        //            }
+        //            .setNegativeButton("继续使用此版本") { _: DialogInterface?, _: Int ->  }
+        //            .setOnKeyListener { _, keyCode, _ ->
+        //                keyCode == KeyEvent.KEYCODE_BACK
+        //            }
+        //            .setCancelable(false)
+        //            .show()
+        //} else {
+        //    if (!useANGLE)
+        //     AlertDialog.Builder(this)
+        //         .setTitle("警告")
+        //         .setMessage("检测到设备的 GPU 不是 Adreno 740! 非 Adreno 740 的设备在没有使用 ANGLE 的 Krypton Wrapper 的中出现少部分光影渲染错误，且效率更低!\n\n您应当前往官网，下载没有标注\"NO-ANGLE\"版本。")
+        //         .setPositiveButton("前往官网") { _: DialogInterface?, _: Int ->
+        //             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(websiteUrl))
+        //             startActivity(intent)
+        //         }
+        //         .setNegativeButton("继续使用此版本") { _: DialogInterface?, _: Int ->  }
+        //         .setOnKeyListener { _, keyCode, _ ->
+        //             keyCode == KeyEvent.KEYCODE_BACK
+        //         }
+        //         .setCancelable(false)
+        //         .show()
+        //}
     }
 
     @OptIn(DelicateCoroutinesApi::class)
@@ -455,9 +447,13 @@ class MainActivity : Activity() {
         if (markdownContent.isNullOrEmpty()) return
 
         val markwon = Markwon.create(this)
+
+        val baseColor = MaterialColors.getColor(this, com.google.android.material.R.attr.colorPrimary, Color.BLUE)
+        val backgroundColor = ColorUtils.setAlphaComponent(baseColor, (0.0618f * 255).toInt())
+
         markdownView = TextView(this).apply {
             textSize = 16f
-            setTextColor(Color.BLACK)
+            setTextColor(MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurfaceVariant, Color.BLACK))
             gravity = Gravity.START
             alpha = 0f
             translationY = resources.displayMetrics.heightPixels.toFloat() * 0.3f
@@ -467,7 +463,7 @@ class MainActivity : Activity() {
             val shape = GradientDrawable()
             shape.shape = GradientDrawable.RECTANGLE
             shape.cornerRadius = 100f
-            shape.setColor(Color.rgb(230, 250, 254))
+            shape.setColor(backgroundColor) // 设置主题色的淡色背景
             background = shape
         }
         markwon.setMarkdown(markdownView!!, markdownContent)
@@ -561,12 +557,12 @@ class MainActivity : Activity() {
         if(hasAllFilesPermission) {
             NGGConfigEditor.configRefresh()
             var changed = false
-            val forceESCopyTex = NGGConfigEditor.configGetInt("force_es_copy_tex")
-            forceESCopyTexSwitcher?.isChecked = forceESCopyTex == 1
+            val ANGLE = NGGConfigEditor.configGetInt("enableANGLE")
+            ANGLESwitcher?.isChecked = ANGLE == 1
 
-            if (forceESCopyTex != 0 && forceESCopyTex != 1) {
+            if (ANGLE != 0 && ANGLE != 1) {
                 changed = true
-                NGGConfigEditor.configSetInt("force_es_copy_tex", 1)
+                NGGConfigEditor.configSetInt("enableANGLE", 1)
             }
             if (changed) {
                 NGGConfigEditor.configSaveToFile()
