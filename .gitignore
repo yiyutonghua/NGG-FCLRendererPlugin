@@ -17,3 +17,5 @@ local.properties
 /app/release
 /app/ANGLE
 /app/NO-ANGLE
+/NGG/.cxx
+/NGG/build

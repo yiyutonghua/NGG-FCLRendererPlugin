@@ -1,0 +1,3 @@
+[submodule "NGG/src/main/cpp"]
+	path = NGG/src/main/cpp
+	url = git@github.com:BZLZHH/NG-GL4ES.git
