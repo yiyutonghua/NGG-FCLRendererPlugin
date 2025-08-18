@@ -63,7 +63,7 @@ class MainActivity : Activity() {
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         checkPermission()
         if (hasAllFilesPermission) {
             NGGConfigEditor.configRefresh()
@@ -147,7 +147,7 @@ class MainActivity : Activity() {
         horizontalInnerLayout.addView(settingText2.apply { setPadding(8.dpToPx(),0,0,0) })
 
         val angleDisabledHint = MaterialTextView(this).apply {
-            text = "ANGLE 已被禁用，无法使用"
+            text = "ANGLE 在当前版本被禁用，后续可能修复"
             setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodySmall)
             setTextColor(MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurfaceVariant, Color.GRAY))
             gravity = Gravity.CENTER
