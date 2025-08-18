@@ -18,7 +18,7 @@ android {
         minSdk = 26
         targetSdk = 34
         versionCode = 2
-        versionName = "Development 0.3.0"
+        versionName = "Release 0.3.0"
 
         manifestPlaceholders["des"] = "Krypton Wrapper (OpenGL 3.0+)"
         manifestPlaceholders["renderer"] = "NGGL4ES:libng_gl4es.so:libEGL.so"
