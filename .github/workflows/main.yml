@@ -1,0 +1,42 @@
+name: Krypton wrapper
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@main
+        with:
+          submodules: false
+
+      - name: Set current date as env variable
+        run: echo "date_today=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+
+      - name: Set repository name as env variable
+        run: echo "repository_name=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
+
+      - name: Set Up JDK
+        uses: actions/setup-java@main
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@main
+        with:
+           allow-snapshot-wrappers: true
+
+      - name: Build apk
+        run: chmod +x ./gradlew
+            ./gradlew assembleRelease
+
+      - name: Upload apk
+        uses: actions/upload-artifact@main
+        with:
+          name: ${{ env.repository_name }}_${{ env.date_today }}_${{ github.sha }}
+          path: app/build/outputs/apk/release/
